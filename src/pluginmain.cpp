@@ -10,9 +10,9 @@
 #include<fstream>
 #include<format>
 
-#define action_internal_name_1 "pdbheader::pdbheader"
+#define action_internal_name_1 "pdbheader::pdbheaderv2"
 
-#define action_show_name_1 "pdbtoheader"
+#define action_show_name_1 "pdbtoheaderv2"
 
 using namespace std;
 std::ofstream write_file;
@@ -42,9 +42,11 @@ struct example_action : public action_handler_t
         {
             msg("create/open file failed!\n");
         }
-        write_file << "//Generate by https://github.com/helloobaby/pdbtoheader.git \n\n\n";
+        write_file << "//Generate by https://github.com/my1forks/pdbtoheaderv2.git \n\n\n";
         write_file << "#pragma once \n";
         write_file << "#include <ntdef.h> \n\n\n";
+        write_file << "struct symbol{const char* symbol_name; ULONG64 absAddress;};\n\n\n";     //注意多个头文件都包含这个结构体会报错,到时候改个名字
+        write_file << "static const symbol symbol_table[]{";
 
         int seg_count = get_segm_qty();
         for (int s = 0; s < seg_count; s++) {
@@ -101,14 +103,15 @@ struct example_action : public action_handler_t
                         if (ea_name.find("_imp_") != qstring::npos) //导入表
                           continue;
 
-                        std::string t = std::format("const ULONG Offset_{} = {:#x};\n",
-                            ea_name.c_str(), i - get_imagebase());
+                        std::string t = std::format("{{\"{}\", {:#x} }}, \n",
+                            ea_name.c_str(), i);
                         write_file << t;
                     }
                 }
             }
 
         }
+        write_file << "};\n";
         write_file.flush();
         write_file.close();
         return true;
@@ -179,6 +182,6 @@ plugin_t PLUGIN =
   nullptr,
   nullptr,
   nullptr,             
-  "pdbtoheader",
+  "pdbtoheaderv2",
   nullptr,              
 };
